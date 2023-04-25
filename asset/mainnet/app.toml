@@ -2,6 +2,7 @@
 # For more information, see https://github.com/toml-lang/toml
 
 [base]
+# 如果设置为0,则为每天进行更新
 # Interval blocks of breathe block, if breatheBlockInterval is 0, breathe block will be created every day.
 breatheBlockInterval = 0
 # Size of account cache

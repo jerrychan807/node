@@ -94,16 +94,21 @@ type BinanceChain struct {
 
 	// keepers
 	CoinKeeper     bank.Keeper
+	// 去中心化交易所
 	DexKeeper      *dex.DexKeeper
 	AccountKeeper  auth.AccountKeeper
+	// Token
 	TokenMapper    tokens.Mapper
 	ValAddrCache   *ValAddrCache
 	stakeKeeper    stake.Keeper
 	slashKeeper    slashing.Keeper
 	govKeeper      gov.Keeper
+	// Token模块下的时间锁
 	timeLockKeeper timelock.Keeper
+	//  Token模块下的swap
 	swapKeeper     swap.Keeper
 	oracleKeeper   oracle.Keeper
+	// bridge模块
 	bridgeKeeper   bridge.Keeper
 	ibcKeeper      ibc.Keeper
 	scKeeper       sidechain.Keeper
@@ -256,6 +261,7 @@ func NewBinanceChain(logger log.Logger, db dbm.DB, traceStore io.Writer, baseApp
 		common.OracleStoreKey,
 		common.IbcStoreKey,
 	)
+	// 设置权限控制句柄
 	app.SetAnteHandler(tx.NewAnteHandler(app.AccountKeeper))
 	app.SetPreChecker(tx.NewTxPreChecker())
 	app.MountStoresTransient(common.TParamsStoreKey, common.TStakeStoreKey)
@@ -515,6 +521,7 @@ func (app *BinanceChain) initParamHub() {
 	})
 }
 
+// 质押初始化
 func (app *BinanceChain) initStaking() {
 	app.stakeKeeper.SetupForSideChain(&app.scKeeper, &app.ibcKeeper)
 	app.stakeKeeper.SetPbsbServer(app.psServer)
@@ -524,8 +531,8 @@ func (app *BinanceChain) initStaking() {
 		storePrefix := app.scKeeper.GetSideChainStorePrefix(ctx, ServerContext.BscChainId)
 		newCtx := ctx.WithSideChainKeyPrefix(storePrefix)
 		app.stakeKeeper.SetParams(newCtx, stake.Params{
-			UnbondingTime:       60 * 60 * 24 * 7 * time.Second, // 7 days
-			MaxValidators:       21,
+			UnbondingTime:       60 * 60 * 24 * 7 * time.Second, // 解绑时间 7days
+			MaxValidators:       21, // 验证者上限
 			BondDenom:           types.NativeTokenSymbol,
 			MinSelfDelegation:   20000e8,
 			MinDelegationChange: 1e8,
@@ -821,6 +828,7 @@ func (app *BinanceChain) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) a
 	blockTime := ctx.BlockHeader().Time
 	height := ctx.BlockHeader().Height
 	ctx = ctx.WithEventManager(sdk.NewEventManager())
+	// ValidatorSet 在 BreatheBlock 中更新，频率为一天一次。假设它发生在第 N 天。
 	isBreatheBlock := app.isBreatheBlock(height, lastBlockTime, blockTime)
 	var tradesToPublish []*pub.Trade
 	if sdk.IsUpgrade(upgrade.BEP19) || !isBreatheBlock {

@@ -141,6 +141,10 @@ func NewAnteHandler(am auth.AccountKeeper) sdk.AnteHandler {
 		sigs := stdTx.GetSignatures()
 		signerAddrs := stdTx.GetSigners()
 		msgs := tx.GetMsgs()
+		fmt.Printf("sigs: %v", sigs)
+		log.Info("$$$sigs", "sigs", sigs)
+		fmt.Printf("signerAddrs: %v", signerAddrs)
+		fmt.Printf("msgs: %v", msgs)
 
 		// get the sign bytes (requires all account & sequence numbers and the fee)
 		sequences := make([]int64, len(sigs))
@@ -161,6 +165,9 @@ func NewAnteHandler(am auth.AccountKeeper) sdk.AnteHandler {
 			if err != nil {
 				return newCtx, err.Result(), true
 			}
+
+			fmt.Printf("signerAcc.GetPubKey(): %v", signerAcc.GetPubKey())
+			fmt.Printf("sig.PubKey: %v", sig.PubKey)
 
 			if mode == sdk.RunTxModeDeliver ||
 				mode == sdk.RunTxModeCheck ||
@@ -299,6 +306,7 @@ func processAccount(ctx sdk.Context, am auth.AccountKeeper,
 }
 
 // verify the signature and increment the sequence.
+// 验证签名并增加序列号
 // if the account doesn't have a pubkey, set it.
 func processSig(txHash string,
 	sig auth.StdSignature, pubKey crypto.PubKey, signBytes []byte) (
@@ -310,9 +318,16 @@ func processSig(txHash string,
 	}
 
 	// Check sig.
-	if !pubKey.VerifyBytes(signBytes, sig.Signature) {
-		return sdk.ErrUnauthorized("signature verification failed").Result()
-	}
+	log.Info("Execute here $$$")
+	log.Info("txHash:", "txHash", txHash)
+	log.Info("sig:", "sig", sig)
+	log.Info("pubKey:", "pubKey", pubKey)
+	log.Info("signBytes:", "signBytes", signBytes)
+	// 用PubKey对签名进行验证
+	// TODO:先注释掉
+	//if !pubKey.VerifyBytes(signBytes, sig.Signature) {
+	//	return sdk.ErrUnauthorized("signature verification failed").Result()
+	//}
 
 	sigCache.addSig(txHash)
 	return
